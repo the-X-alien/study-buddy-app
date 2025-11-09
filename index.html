@@ -8,14 +8,16 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script async defer src="https://accounts.google.com/gsi/client"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #000; color: #fff; }
         .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; }
-        .btn { background: #007AFF; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .btn { background: #007AFF; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: all 0.3s; font-weight: 600; }
         .btn:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(0,122,255,0.3); }
         .btn:active { transform: scale(0.98); }
+        input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px 15px; border-radius: 8px; font-size: 14px; }
+        input:focus { outline: none; border-color: #007AFF; box-shadow: 0 0 10px rgba(0,122,255,0.2); }
+        input::placeholder { color: rgba(255,255,255,0.5); }
     </style>
 </head>
 <body>
@@ -27,26 +29,34 @@
             const [currentPage, setCurrentPage] = React.useState('home');
             const [sets, setSets] = React.useState([]);
             const [newSetName, setNewSetName] = React.useState('');
+            const [email, setEmail] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [error, setError] = React.useState('');
 
             React.useEffect(() => {
                 const saved = localStorage.getItem('studyBuddyUser');
                 if (saved) setUser(JSON.parse(saved));
                 
-                if (window.google) {
-                    window.google.accounts.id.initialize({
-                        client_id: '764348341169-dtkgtgp4qfj3p6l0fscgi2c18qltqcl.apps.googleusercontent.com',
-                        callback: (response) => {
-                            const decoded = JSON.parse(atob(response.credential.split('.')[1]));
-                            const userData = { name: decoded.name, email: decoded.email, picture: decoded.picture };
-                            setUser(userData);
-                            localStorage.setItem('studyBuddyUser', JSON.stringify(userData));
-                        }
-                    });
-                    setTimeout(() => {
-                        window.google?.accounts?.id?.renderButton(document.getElementById('google_signin_button'), { theme: 'dark', size: 'large' });
-                    }, 100);
-                }
+                const savedSets = localStorage.getItem('studySets');
+                if (savedSets) setSets(JSON.parse(savedSets));
             }, []);
+
+            function handleLogin() {
+                if (!email.trim() || !password.trim()) {
+                    setError('Please enter email and password');
+                    return;
+                }
+                if (!email.includes('@')) {
+                    setError('Please enter valid email');
+                    return;
+                }
+                const userData = { email, name: email.split('@')[0] };
+                setUser(userData);
+                localStorage.setItem('studyBuddyUser', JSON.stringify(userData));
+                setEmail('');
+                setPassword('');
+                setError('');
+            }
 
             function handleSignOut() {
                 setUser(null);
@@ -57,8 +67,9 @@
             function createSet() {
                 if (newSetName.trim()) {
                     const newSet = { id: Date.now(), name: newSetName, cards: [] };
-                    setSets([...sets, newSet]);
-                    localStorage.setItem('studySets', JSON.stringify([...sets, newSet]));
+                    const updated = [...sets, newSet];
+                    setSets(updated);
+                    localStorage.setItem('studySets', JSON.stringify(updated));
                     setNewSetName('');
                 }
             }
@@ -67,8 +78,14 @@
                 <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
                     <div className="glass p-8 max-w-md w-full">
                         <h1 className="text-4xl font-bold mb-2">Study Buddy</h1>
-                        <p className="text-gray-300 mb-8">Free AI-powered study platform rivaling StudyFetch</p>
-                        <div id="google_signin_button"></div>
+                        <p className="text-gray-300 mb-8">Free AI-powered study platform</p>
+                        <div className="space-y-4">
+                            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                            {error && <p className="text-red-400 text-sm">{error}</p>}
+                            <button onClick={handleLogin} className="btn w-full">Sign In</button>
+                            <p className="text-gray-400 text-xs text-center">Demo: Use any email & password</p>
+                        </div>
                     </div>
                 </div>
             );
@@ -78,16 +95,15 @@
                     <div className="glass m-4 p-4 flex justify-between items-center">
                         <h1 className="text-2xl font-bold">Study Buddy</h1>
                         <div className="flex items-center gap-4">
-                            <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full" />
-                            <span>{user.name}</span>
-                            <button onClick={handleSignOut} className="btn">Sign Out</button>
+                            <span className="text-sm text-gray-300">{user.name}</span>
+                            <button onClick={handleSignOut} className="btn bg-red-600 hover:bg-red-700">Sign Out</button>
                         </div>
                     </div>
 
-                    <div className="flex">
-                        <div className="glass m-4 p-4 w-48">
+                    <div className="flex gap-4">
+                        <div className="glass m-4 p-4 w-48 h-fit">
                             {['Home', 'Sets', 'Flashcards', 'Quizzes', 'Notes', 'Arcade', 'Calendar', 'Tutor', 'Memorizer', 'Planner', 'Competition'].map(p => (
-                                <button key={p} onClick={() => setCurrentPage(p.toLowerCase())} className={`w-full text-left p-2 mb-2 rounded ${currentPage === p.toLowerCase() ? 'bg-blue-600' : 'hover:bg-gray-800'}`}>
+                                <button key={p} onClick={() => setCurrentPage(p.toLowerCase())} className={`w-full text-left p-2 mb-2 rounded text-sm transition ${currentPage === p.toLowerCase() ? 'bg-blue-600' : 'hover:bg-gray-800'}`}>
                                     {p}
                                 </button>
                             ))}
@@ -98,10 +114,10 @@
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
                                     <div className="grid grid-cols-4 gap-4">
-                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-blue-400">{sets.length}</div><div className="text-gray-300">Study Sets</div></div>
-                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-green-400">42</div><div className="text-gray-300">Flashcards</div></div>
-                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-purple-400">87%</div><div className="text-gray-300">Accuracy</div></div>
-                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-orange-400">5</div><div className="text-gray-300">Day Streak</div></div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-blue-400">{sets.length}</div><div className="text-sm text-gray-300 mt-2">Study Sets</div></div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-green-400">42</div><div className="text-sm text-gray-300 mt-2">Flashcards</div></div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-purple-400">87%</div><div className="text-sm text-gray-300 mt-2">Accuracy</div></div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-orange-400">5</div><div className="text-sm text-gray-300 mt-2">Day Streak</div></div>
                                     </div>
                                 </div>
                             )}
@@ -109,11 +125,11 @@
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">My Study Sets</h2>
                                     <div className="mb-6 flex gap-2">
-                                        <input type="text" value={newSetName} onChange={(e) => setNewSetName(e.target.value)} placeholder="New set name..." className="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" />
-                                        <button onClick={createSet} className="btn">Create Set</button>
+                                        <input type="text" value={newSetName} onChange={(e) => setNewSetName(e.target.value)} placeholder="Enter set name..." className="flex-1" />
+                                        <button onClick={createSet} className="btn">Create</button>
                                     </div>
                                     <div className="grid grid-cols-3 gap-4">
-                                        {sets.map(s => <div key={s.id} className="glass p-4"><h3 className="font-bold">{s.name}</h3><p className="text-gray-400">{s.cards.length} cards</p></div>)}
+                                        {sets.map(s => <div key={s.id} className="glass p-4 cursor-pointer hover:border-blue-400"><h3 className="font-bold">{s.name}</h3><p className="text-sm text-gray-400 mt-2">{s.cards.length} cards</p></div>)}
                                     </div>
                                 </div>
                             )}
@@ -121,11 +137,11 @@
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">Flashcards</h2>
                                     <div className="glass p-8 text-center">
-                                        <div className="text-2xl mb-4">Front of card</div>
-                                        <div className="flex gap-4 justify-center mt-6">
+                                        <div className="text-2xl mb-6">What is photosynthesis?</div>
+                                        <div className="flex gap-3 justify-center mt-6">
                                             <button className="btn">Know It</button>
-                                            <button className="btn bg-yellow-600">Review</button>
-                                            <button className="btn bg-red-600">Need Help</button>
+                                            <button className="btn bg-yellow-600 hover:bg-yellow-700">Review</button>
+                                            <button className="btn bg-red-600 hover:bg-red-700">Need Help</button>
                                         </div>
                                     </div>
                                 </div>
@@ -134,14 +150,14 @@
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">Arcade Games</h2>
                                     <div className="grid grid-cols-3 gap-4">
-                                        {['Quiz Rush', 'Memory Match', 'Word Blitz', 'Trivia Climb', 'Study Shooter', 'Multiplayer'].map(g => <div key={g} className="glass p-4 cursor-pointer hover:bg-blue-600"><div className="font-bold">{g}</div><div className="text-sm text-gray-400">Play now</div></div>)}
+                                        {['Quiz Rush', 'Memory Match', 'Word Blitz', 'Trivia Climb', 'Study Shooter', 'Multiplayer'].map(g => <div key={g} className="glass p-4 cursor-pointer hover:bg-blue-600 transition text-center"><div className="font-bold">{g}</div><div className="text-xs text-gray-400 mt-2">Play Now</div></div>)}
                                     </div>
                                 </div>
                             )}
                             {!['home', 'sets', 'flashcards', 'arcade'].includes(currentPage) && (
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">{currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}</h2>
-                                    <p className="text-gray-400">Feature coming soon...</p>
+                                    <div className="glass p-8 text-center text-gray-400">Feature coming soon...</div>
                                 </div>
                             )}
                         </div>
