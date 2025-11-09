@@ -1,1 +1,226 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Study Buddy - AI Learning</title><script src="https://accounts.google.com/gsi/client" async defer></script><script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script><script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script><script src="https://cdn.tailwindcss.com"></script><script src="https://unpkg.com/@babel/standalone/babel.min.js"></script><script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script><style>body{font-family:'Inter',-apple-system,sans-serif;margin:0}.glass{backdrop-filter:blur(20px);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2)}.btn{transition:all .3s cubic-bezier(.34,1.56,.64,1);cursor:pointer}.btn:hover{transform:scale(1.01);box-shadow:0 10px 30px rgba(0,122,255,.3)}.btn:active{transform:scale(.98)}.animate-shimmer{animation:shimmer 2s infinite}@keyframes shimmer{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}</style></head><body class="bg-black text-white"><div id="root"></div><script type="text/babel">const API_BASE='https://api.openai.com/v1';const OPENAI_KEY='sk-demo';const APP=()=>{const[user,setUser]=React.useState(null);const[page,setPage]=React.useState('home');const[sets,setSets]=React.useState([]);const[cards,setCards]=React.useState([]);const[notes,setNotes]=React.useState([]);const[quizzes,setQuizzes]=React.useState([]);const[stats,setStats]=React.useState({sets:0,cards:0,score:87,streak:12});const[input,setInput]=React.useState('');React.useEffect(()=>{initGoogle();loadData()},[]);const initGoogle=()=>{window.google?.accounts.id.initialize({client_id:'970988128380-9p9f5q5q5q5q5q5q5q5q5q5q5q5q5q5q.apps.googleusercontent.com',callback:handleLogin});document.getElementById('signin-btn')&&window.google.accounts.id.renderButton(document.getElementById('signin-btn'),{theme:'dark'})};const handleLogin=(response)=>{const decoded=JSON.parse(atob(response.credential.split('.')[1]));setUser({name:decoded.name,email:decoded.email,picture:decoded.picture});localStorage.setItem('user',JSON.stringify(decoded))};const loadData=()=>{const saved=localStorage.getItem('user');if(saved)setUser(JSON.parse(saved));setSets(JSON.parse(localStorage.getItem('sets')||'[]'));setCards(JSON.parse(localStorage.getItem('cards')||'[]'));setNotes(JSON.parse(localStorage.getItem('notes')||'[]'))};const createSet=(name)=>{const newSet={id:Date.now(),name,cards:[],created:new Date()};setSets([...sets,newSet]);localStorage.setItem('sets',JSON.stringify([...sets,newSet]))};const addCard=(setId,front,back)=>{const newCard={id:Date.now(),setId,front,back,difficulty:'medium'};setCards([...cards,newCard]);localStorage.setItem('cards',JSON.stringify([...cards,newCard]))};const createQuiz=()=>{const newQuiz={id:Date.now(),questions:10,score:Math.floor(Math.random()*100),topic:'General',created:new Date()};setQuizzes([...quizzes,newQuiz])};if(!user)return React.createElement('div',{className:'h-screen flex flex-col items-center justify-center gap-8 bg-black'},[React.createElement('h1',{key:'h1',className:'text-5xl font-bold'},'Study Buddy'),React.createElement('p',{key:'p',className:'text-xl text-gray-400'},'AI-Powered Learning Platform'),React.createElement('div',{key:'signin',id:'signin-btn'})]);return React.createElement('div',{className:'flex h-screen bg-black text-white'},[React.createElement('nav',{key:'nav',className:'w-64 glass border-r border-blue-500/20 p-6 overflow-y-auto'},React.createElement('div',{className:'space-y-2'},[React.createElement('div',{key:'profile',className:'flex items-center gap-3 mb-8'},React.createElement('img',{src:user.picture,className:'w-10 h-10 rounded-full'}),React.createElement('div',{},[React.createElement('p',{className:'font-bold text-sm'},user.name),React.createElement('p',{className:'text-xs text-gray-400'},user.email)])),['home','sets','flashcards','quizzes','notes','arcade','chat','memorizer','planner','competition'].map(p=>React.createElement('button',{key:p,onClick:()=>setPage(p),className:`w-full text-left px-4 py-2 rounded-lg btn ${page===p?'bg-blue-500/30':'hover:bg-white/5'}`},p===home'?'🏠 Home':p==='sets'?'📚 Sets':p==='flashcards'?'🎯 Flashcards':p==='quizzes'?'📝 Quizzes':p==='notes'?'📖 Notes':p==='arcade'?'🎮 Arcade':p==='chat'?'🤖 Chat':p==='memorizer'?'🧠 Memorizer':p==='planner'?'📅 Planner':'🏆 Compete')),React.createElement('button',{key:'logout',onClick:()=>{localStorage.clear();setUser(null)},className:'w-full px-4 py-2 bg-red-600 rounded-lg btn text-white mt-8'},'Sign Out')])),React.createElement('main',{key:'main',className:'flex-1 overflow-auto p-8'},[page==='home'&&React.createElement('div',{key:'home'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},`Welcome, ${user.name}! 🎓`),React.createElement('div',{className:'grid grid-cols-4 gap-4'},[React.createElement('div',{key:'stat1',className:'glass p-6 rounded-xl'},React.createElement('div',{className:'text-3xl font-bold text-blue-400'},sets.length),React.createElement('div',{className:'text-gray-400'},'Study Sets')),React.createElement('div',{key:'stat2',className:'glass p-6 rounded-xl'},React.createElement('div',{className:'text-3xl font-bold text-green-400'},cards.length),React.createElement('div',{className:'text-gray-400'},'Flashcards')),React.createElement('div',{key:'stat3',className:'glass p-6 rounded-xl'},React.createElement('div',{className:'text-3xl font-bold text-purple-400'},stats.score+'%'),React.createElement('div',{className:'text-gray-400'},'Accuracy')),React.createElement('div',{key:'stat4',className:'glass p-6 rounded-xl'},React.createElement('div',{className:'text-3xl font-bold text-orange-400'},stats.streak),React.createElement('div',{className:'text-gray-400'},'Day Streak'))])),page==='sets'&&React.createElement('div',{key:'sets'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'📚 My Study Sets'),React.createElement('div',{className:'flex gap-4 mb-8'},React.createElement('input',{type:'text',value:input,onChange:e=>setInput(e.target.value),placeholder:'Set name...',className:'flex-1 px-4 py-2 bg-white/10 rounded-lg border border-blue-500/20'}),React.createElement('button',{onClick:()=>{if(input)createSet(input);setInput('')},className:'px-6 py-2 bg-blue-600 rounded-lg btn'},'Create')),React.createElement('div',{className:'grid grid-cols-2 gap-4'},sets.map(s=>React.createElement('div',{key:s.id,className:'glass p-6 rounded-xl btn cursor-pointer'},React.createElement('h3',{className:'font-bold text-lg'},s.name),React.createElement('p',{className:'text-gray-400 text-sm mt-2'},s.cards.length+' cards'))))),page==='flashcards'&&React.createElement('div',{key:'fc'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'🎯 Flashcards'),React.createElement('div',{className:'glass p-8 rounded-xl text-center'},React.createElement('div',{className:'text-6xl mb-4'},'🎯'),React.createElement('p',{className:'text-lg mb-6'},'Study Mode Active'),React.createElement('div',{className:'flex gap-4 justify-center'},React.createElement('button',{className:'px-6 py-2 bg-green-600 rounded-lg btn'},'Know It'),React.createElement('button',{className:'px-6 py-2 bg-yellow-600 rounded-lg btn'},'Review'),React.createElement('button',{className:'px-6 py-2 bg-red-600 rounded-lg btn'},'Need Help')))),page==='arcade'&&React.createElement('div',{key:'arcade'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'🎮 Arcade Games'),React.createElement('div',{className:'grid grid-cols-2 gap-4'},[{name:'Quiz Rush',icon:'⚡'},{name:'Memory Match',icon:'💎'},{name:'Word Blitz',icon:'💨'},{name:'Study Shooter',icon:'🎯'},{name:'Trivia Climb',icon:'🪜'},{name:'Multiplayer',icon:'👥'}].map(g=>React.createElement('div',{key:g.name,className:'glass p-6 rounded-xl btn cursor-pointer'},React.createElement('div',{className:'text-5xl mb-2'},g.icon),React.createElement('h3',{className:'font-bold'},g.name))))),page==='quizzes'&&React.createElement('div',{key:'quiz'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'📝 Tests & Quizzes'),React.createElement('button',{onClick:createQuiz,className:'px-6 py-3 bg-blue-600 rounded-lg btn mb-8'},'Generate Quiz'),React.createElement('div',{className:'grid grid-cols-1 gap-4'},quizzes.map(q=>React.createElement('div',{key:q.id,className:'glass p-4 rounded-xl'},React.createElement('div',{className:'flex justify-between'},React.createElement('p',{},`Quiz: ${q.topic}`),React.createElement('p',{className:'text-green-400'},'Score: '+q.score+'%')))))),page==='notes'&&React.createElement('div',{key:'notes'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'📖 Notes'),React.createElement('textarea',{placeholder:'Take notes...',className:'w-full h-96 p-4 bg-white/10 rounded-lg border border-blue-500/20 text-white'})),page==='chat'&&React.createElement('div',{key:'chat'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'🤖 AI Tutor'),React.createElement('div',{className:'h-96 glass rounded-xl p-4 mb-4 overflow-y-auto'},'Chat coming soon...'),React.createElement('input',{type:'text',placeholder:'Ask me anything...',className:'w-full px-4 py-2 bg-white/10 rounded-lg border border-blue-500/20'})),page==='memorizer'&&React.createElement('div',{key:'mem'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'🧠 Memorizer'),React.createElement('p',{className:'text-gray-400'},'Active Recall System - Coming Soon')),page==='planner'&&React.createElement('div',{key:'plan'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'📅 Day Planner'),React.createElement('p',{className:'text-gray-400'},'Schedule your study sessions')),page==='competition'&&React.createElement('div',{key:'comp'},React.createElement('h1',{className:'text-4xl font-bold mb-8'},'🏆 Competition Prep'),React.createElement('div',{className:'grid grid-cols-2 gap-4'},[{name:'AMC 10',icon:'📐'},{name:'Science Olympiad',icon:'🔬'},{name:'SAT Prep',icon:'📚'},{name:'AP Exams',icon:'🎯'}].map(c=>React.createElement('div',{key:c.name,className:'glass p-6 rounded-xl btn cursor-pointer'},React.createElement('div',{className:'text-4xl mb-2'},c.icon),React.createElement('h3',{className:'font-bold'},c.name)))))])]);ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(APP));</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Buddy - AI Learning Platform</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #000;
+            color: #fff;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+        }
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+        }
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        function App() {
+            const [user, setUser] = React.useState(null);
+            const [currentPage, setCurrentPage] = React.useState('home');
+            const [sets, setSets] = React.useState([]);
+            const [newSetName, setNewSetName] = React.useState('');
+
+            React.useEffect(() => {
+                // Load user from localStorage
+                const savedUser = localStorage.getItem('studyBuddyUser');
+                if (savedUser) setUser(JSON.parse(savedUser));
+
+                // Initialize Google Sign-In
+                if (window.google) {
+                    window.google.accounts.id.initialize({
+                        client_id: '764348341169-dtkgtgp4qfj3p6l0fscgi2c18qltqcl.apps.googleusercontent.com',
+                        callback: handleSignIn
+                    });
+                }
+            }, []);
+
+            function handleSignIn(response) {
+                const decoded = JSON.parse(atob(response.credential.split('.')[1]));
+                const userData = {
+                    name: decoded.name,
+                    email: decoded.email,
+                    picture: decoded.picture
+                };
+                setUser(userData);
+                localStorage.setItem('studyBuddyUser', JSON.stringify(userData));
+            }
+
+            function handleSignOut() {
+                setUser(null);
+                localStorage.removeItem('studyBuddyUser');
+                setCurrentPage('home');
+            }
+
+            function createSet() {
+                if (newSetName.trim()) {
+                    setSets([...sets, { id: Date.now(), name: newSetName, cards: [] }]);
+                    setNewSetName('');
+                    localStorage.setItem('studySets', JSON.stringify([...sets, { id: Date.now(), name: newSetName, cards: [] }]));
+                }
+            }
+
+            if (!user) {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
+                        <div className="glass-card p-8 max-w-md w-full">
+                            <h1 className="text-4xl font-bold mb-2">Study Buddy</h1>
+                            <p className="text-gray-300 mb-8">Free AI-powered study platform rivaling StudyFetch</p>
+                            <div id="google_signin_button" className="w-full"></div>
+                            <script>
+                                {
+                                    if (window.google) {
+                                        window.google.accounts.id.renderButton(
+                                            document.getElementById('google_signin_button'),
+                                            { theme: 'dark', size: 'large' }
+                                        );
+                                    }
+                                }
+                            </script>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen bg-black">
+                    <div className="glass-card m-4 p-4 flex justify-between items-center">
+                        <h1 className="text-2xl font-bold">Study Buddy</h1>
+                        <div className="flex items-center gap-4">
+                            <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full" />
+                            <span>{user.name}</span>
+                            <button onClick={handleSignOut} className="btn-primary">Sign Out</button>
+                        </div>
+                    </div>
+
+                    <div className="flex">
+                        <div className="glass-card m-4 p-4 w-48">
+                            {['home', 'sets', 'flashcards', 'quizzes', 'notes', 'arcade', 'calendar', 'tutor', 'memorizer', 'planner', 'competition'].map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`w-full text-left p-2 mb-2 rounded ${currentPage === page ? 'bg-blue-600' : 'hover:bg-gray-800'}`}
+                                >
+                                    {page.charAt(0).toUpperCase() + page.slice(1)}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex-1 m-4 glass-card p-8">
+                            {currentPage === 'home' && (
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
+                                    <div className="grid grid-cols-4 gap-4">
+                                        <div className="glass-card p-4 text-center">
+                                            <div className="text-3xl font-bold text-blue-400">{sets.length}</div>
+                                            <div className="text-gray-300">Study Sets</div>
+                                        </div>
+                                        <div className="glass-card p-4 text-center">
+                                            <div className="text-3xl font-bold text-green-400">42</div>
+                                            <div className="text-gray-300">Flashcards</div>
+                                        </div>
+                                        <div className="glass-card p-4 text-center">
+                                            <div className="text-3xl font-bold text-purple-400">87%</div>
+                                            <div className="text-gray-300">Accuracy</div>
+                                        </div>
+                                        <div className="glass-card p-4 text-center">
+                                            <div className="text-3xl font-bold text-orange-400">5</div>
+                                            <div className="text-gray-300">Day Streak</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {currentPage === 'sets' && (
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-6">My Study Sets</h2>
+                                    <div className="mb-6 flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newSetName}
+                                            onChange={(e) => setNewSetName(e.target.value)}
+                                            placeholder="New set name..."
+                                            className="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600"
+                                        />
+                                        <button onClick={createSet} className="btn-primary">Create Set</button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {sets.map(set => (
+                                            <div key={set.id} className="glass-card p-4">
+                                                <h3 className="font-bold">{set.name}</h3>
+                                                <p className="text-gray-400">{set.cards.length} cards</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {currentPage === 'flashcards' && (
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-6">Flashcards</h2>
+                                    <div className="glass-card p-8 text-center">
+                                        <div className="text-2xl mb-4">Front of card</div>
+                                        <div className="flex gap-4 justify-center mt-6">
+                                            <button className="btn-primary">Know It</button>
+                                            <button className="btn-primary bg-yellow-600">Review</button>
+                                            <button className="btn-primary bg-red-600">Need Help</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {currentPage === 'arcade' && (
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-6">Arcade Games</h2>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        {['Quiz Rush', 'Memory Match', 'Word Blitz', 'Trivia Climb', 'Study Shooter', 'Multiplayer'].map(game => (
+                                            <div key={game} className="glass-card p-4 cursor-pointer hover:bg-blue-600 transition">
+                                                <div className="font-bold">{game}</div>
+                                                <div className="text-sm text-gray-400">Play now</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {currentPage !== 'home' && currentPage !== 'sets' && currentPage !== 'flashcards' && currentPage !== 'arcade' && (
+                                <div>
+                                    <h2 className="text-3xl font-bold mb-6">{currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}</h2>
+                                    <p className="text-gray-400">Feature coming soon...</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
