@@ -4,45 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study Buddy - AI Learning Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script async defer src="https://accounts.google.com/gsi/client"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: #fff;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 12px;
-        }
-        .btn-primary {
-            background: #007AFF;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .btn-primary:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
-        }
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #000; color: #fff; }
+        .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; }
+        .btn { background: #007AFF; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
+        .btn:hover { transform: scale(1.02); box-shadow: 0 8px 20px rgba(0,122,255,0.3); }
+        .btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
     <div id="root"></div>
+
     <script type="text/babel">
         function App() {
             const [user, setUser] = React.useState(null);
@@ -51,29 +29,24 @@
             const [newSetName, setNewSetName] = React.useState('');
 
             React.useEffect(() => {
-                // Load user from localStorage
-                const savedUser = localStorage.getItem('studyBuddyUser');
-                if (savedUser) setUser(JSON.parse(savedUser));
-
-                // Initialize Google Sign-In
+                const saved = localStorage.getItem('studyBuddyUser');
+                if (saved) setUser(JSON.parse(saved));
+                
                 if (window.google) {
                     window.google.accounts.id.initialize({
                         client_id: '764348341169-dtkgtgp4qfj3p6l0fscgi2c18qltqcl.apps.googleusercontent.com',
-                        callback: handleSignIn
+                        callback: (response) => {
+                            const decoded = JSON.parse(atob(response.credential.split('.')[1]));
+                            const userData = { name: decoded.name, email: decoded.email, picture: decoded.picture };
+                            setUser(userData);
+                            localStorage.setItem('studyBuddyUser', JSON.stringify(userData));
+                        }
                     });
+                    setTimeout(() => {
+                        window.google?.accounts?.id?.renderButton(document.getElementById('google_signin_button'), { theme: 'dark', size: 'large' });
+                    }, 100);
                 }
             }, []);
-
-            function handleSignIn(response) {
-                const decoded = JSON.parse(atob(response.credential.split('.')[1]));
-                const userData = {
-                    name: decoded.name,
-                    email: decoded.email,
-                    picture: decoded.picture
-                };
-                setUser(userData);
-                localStorage.setItem('studyBuddyUser', JSON.stringify(userData));
-            }
 
             function handleSignOut() {
                 setUser(null);
@@ -83,79 +56,52 @@
 
             function createSet() {
                 if (newSetName.trim()) {
-                    setSets([...sets, { id: Date.now(), name: newSetName, cards: [] }]);
+                    const newSet = { id: Date.now(), name: newSetName, cards: [] };
+                    setSets([...sets, newSet]);
+                    localStorage.setItem('studySets', JSON.stringify([...sets, newSet]));
                     setNewSetName('');
-                    localStorage.setItem('studySets', JSON.stringify([...sets, { id: Date.now(), name: newSetName, cards: [] }]));
                 }
             }
 
-            if (!user) {
-                return (
-                    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
-                        <div className="glass-card p-8 max-w-md w-full">
-                            <h1 className="text-4xl font-bold mb-2">Study Buddy</h1>
-                            <p className="text-gray-300 mb-8">Free AI-powered study platform rivaling StudyFetch</p>
-                            <div id="google_signin_button" className="w-full"></div>
-                            <script>
-                                {
-                                    if (window.google) {
-                                        window.google.accounts.id.renderButton(
-                                            document.getElementById('google_signin_button'),
-                                            { theme: 'dark', size: 'large' }
-                                        );
-                                    }
-                                }
-                            </script>
-                        </div>
+            if (!user) return (
+                <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex items-center justify-center p-4">
+                    <div className="glass p-8 max-w-md w-full">
+                        <h1 className="text-4xl font-bold mb-2">Study Buddy</h1>
+                        <p className="text-gray-300 mb-8">Free AI-powered study platform rivaling StudyFetch</p>
+                        <div id="google_signin_button"></div>
                     </div>
-                );
-            }
+                </div>
+            );
 
             return (
                 <div className="min-h-screen bg-black">
-                    <div className="glass-card m-4 p-4 flex justify-between items-center">
+                    <div className="glass m-4 p-4 flex justify-between items-center">
                         <h1 className="text-2xl font-bold">Study Buddy</h1>
                         <div className="flex items-center gap-4">
                             <img src={user.picture} alt={user.name} className="w-10 h-10 rounded-full" />
                             <span>{user.name}</span>
-                            <button onClick={handleSignOut} className="btn-primary">Sign Out</button>
+                            <button onClick={handleSignOut} className="btn">Sign Out</button>
                         </div>
                     </div>
 
                     <div className="flex">
-                        <div className="glass-card m-4 p-4 w-48">
-                            {['home', 'sets', 'flashcards', 'quizzes', 'notes', 'arcade', 'calendar', 'tutor', 'memorizer', 'planner', 'competition'].map(page => (
-                                <button
-                                    key={page}
-                                    onClick={() => setCurrentPage(page)}
-                                    className={`w-full text-left p-2 mb-2 rounded ${currentPage === page ? 'bg-blue-600' : 'hover:bg-gray-800'}`}
-                                >
-                                    {page.charAt(0).toUpperCase() + page.slice(1)}
+                        <div className="glass m-4 p-4 w-48">
+                            {['Home', 'Sets', 'Flashcards', 'Quizzes', 'Notes', 'Arcade', 'Calendar', 'Tutor', 'Memorizer', 'Planner', 'Competition'].map(p => (
+                                <button key={p} onClick={() => setCurrentPage(p.toLowerCase())} className={`w-full text-left p-2 mb-2 rounded ${currentPage === p.toLowerCase() ? 'bg-blue-600' : 'hover:bg-gray-800'}`}>
+                                    {p}
                                 </button>
                             ))}
                         </div>
 
-                        <div className="flex-1 m-4 glass-card p-8">
+                        <div className="flex-1 m-4 glass p-8">
                             {currentPage === 'home' && (
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">Dashboard</h2>
                                     <div className="grid grid-cols-4 gap-4">
-                                        <div className="glass-card p-4 text-center">
-                                            <div className="text-3xl font-bold text-blue-400">{sets.length}</div>
-                                            <div className="text-gray-300">Study Sets</div>
-                                        </div>
-                                        <div className="glass-card p-4 text-center">
-                                            <div className="text-3xl font-bold text-green-400">42</div>
-                                            <div className="text-gray-300">Flashcards</div>
-                                        </div>
-                                        <div className="glass-card p-4 text-center">
-                                            <div className="text-3xl font-bold text-purple-400">87%</div>
-                                            <div className="text-gray-300">Accuracy</div>
-                                        </div>
-                                        <div className="glass-card p-4 text-center">
-                                            <div className="text-3xl font-bold text-orange-400">5</div>
-                                            <div className="text-gray-300">Day Streak</div>
-                                        </div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-blue-400">{sets.length}</div><div className="text-gray-300">Study Sets</div></div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-green-400">42</div><div className="text-gray-300">Flashcards</div></div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-purple-400">87%</div><div className="text-gray-300">Accuracy</div></div>
+                                        <div className="glass p-4 text-center"><div className="text-3xl font-bold text-orange-400">5</div><div className="text-gray-300">Day Streak</div></div>
                                     </div>
                                 </div>
                             )}
@@ -163,34 +109,23 @@
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">My Study Sets</h2>
                                     <div className="mb-6 flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={newSetName}
-                                            onChange={(e) => setNewSetName(e.target.value)}
-                                            placeholder="New set name..."
-                                            className="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600"
-                                        />
-                                        <button onClick={createSet} className="btn-primary">Create Set</button>
+                                        <input type="text" value={newSetName} onChange={(e) => setNewSetName(e.target.value)} placeholder="New set name..." className="flex-1 bg-gray-800 text-white p-2 rounded border border-gray-600" />
+                                        <button onClick={createSet} className="btn">Create Set</button>
                                     </div>
                                     <div className="grid grid-cols-3 gap-4">
-                                        {sets.map(set => (
-                                            <div key={set.id} className="glass-card p-4">
-                                                <h3 className="font-bold">{set.name}</h3>
-                                                <p className="text-gray-400">{set.cards.length} cards</p>
-                                            </div>
-                                        ))}
+                                        {sets.map(s => <div key={s.id} className="glass p-4"><h3 className="font-bold">{s.name}</h3><p className="text-gray-400">{s.cards.length} cards</p></div>)}
                                     </div>
                                 </div>
                             )}
                             {currentPage === 'flashcards' && (
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">Flashcards</h2>
-                                    <div className="glass-card p-8 text-center">
+                                    <div className="glass p-8 text-center">
                                         <div className="text-2xl mb-4">Front of card</div>
                                         <div className="flex gap-4 justify-center mt-6">
-                                            <button className="btn-primary">Know It</button>
-                                            <button className="btn-primary bg-yellow-600">Review</button>
-                                            <button className="btn-primary bg-red-600">Need Help</button>
+                                            <button className="btn">Know It</button>
+                                            <button className="btn bg-yellow-600">Review</button>
+                                            <button className="btn bg-red-600">Need Help</button>
                                         </div>
                                     </div>
                                 </div>
@@ -199,16 +134,11 @@
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">Arcade Games</h2>
                                     <div className="grid grid-cols-3 gap-4">
-                                        {['Quiz Rush', 'Memory Match', 'Word Blitz', 'Trivia Climb', 'Study Shooter', 'Multiplayer'].map(game => (
-                                            <div key={game} className="glass-card p-4 cursor-pointer hover:bg-blue-600 transition">
-                                                <div className="font-bold">{game}</div>
-                                                <div className="text-sm text-gray-400">Play now</div>
-                                            </div>
-                                        ))}
+                                        {['Quiz Rush', 'Memory Match', 'Word Blitz', 'Trivia Climb', 'Study Shooter', 'Multiplayer'].map(g => <div key={g} className="glass p-4 cursor-pointer hover:bg-blue-600"><div className="font-bold">{g}</div><div className="text-sm text-gray-400">Play now</div></div>)}
                                     </div>
                                 </div>
                             )}
-                            {currentPage !== 'home' && currentPage !== 'sets' && currentPage !== 'flashcards' && currentPage !== 'arcade' && (
+                            {!['home', 'sets', 'flashcards', 'arcade'].includes(currentPage) && (
                                 <div>
                                     <h2 className="text-3xl font-bold mb-6">{currentPage.charAt(0).toUpperCase() + currentPage.slice(1)}</h2>
                                     <p className="text-gray-400">Feature coming soon...</p>
@@ -220,7 +150,8 @@
             );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
