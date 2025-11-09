@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Buddy - Free AI Learning Platform</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+    <style>
+        * { --tw-shadow-colored: 0 0 #0000; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+        .glass-card { backdrop-filter: blur(20px); background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
+        .glass-card:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        .glass-btn { transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .glass-btn:hover { transform: scale(1.01); box-shadow: 0 10px 30px rgba(0,122,255,0.3); }
+        .glass-btn:active { transform: scale(0.98); }
+        @keyframes shimmer { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+        .animate-shimmer { animation: shimmer 2s infinite; }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <div id="root"></div>
+    <script type="text/babel">
+        // Core application component with all features
+        const APP = () => {
+            const [currentPage, setCurrentPage] = React.useState('home');
+            const [studySets, setStudySets] = React.useState([]);
+            const [flashcards, setFlashcards] = React.useState([]);
+            const [notes, setNotes] = React.useState([]);
+            const [quizzes, setQuizzes] = React.useState([]);
+            const [stats, setStats] = React.useState({ totalSets: 12, cardsStudied: 248, accuracy: 87 });
+
+            const renderNavigation = () => (
+                <nav className="fixed left-0 top-0 h-screen w-64 glass-card border-r border-blue-500/20 p-6 flex flex-col">
+                    <h1 className="text-2xl font-bold mb-8">Study Buddy</h1>
+                    <div className="space-y-2 flex-1">
+                        {[
+                            { id: 'home', label: 'Home', icon: '🏠' },
+                            { id: 'sets', label: 'My Sets', icon: '📚' },
+                            { id: 'calendar', label: 'Calendar', icon: '📅' },
+                            { id: 'chat', label: 'AI Tutor', icon: '🤖' },
+                            { id: 'flashcards', label: 'Flashcards', icon: '🎯' },
+                            { id: 'quizzes', label: 'Quizzes', icon: '📝' },
+                            { id: 'notes', label: 'Notes', icon: '📖' },
+                            { id: 'essay', label: 'Essay', icon: '✍️' },
+                            { id: 'arcade', label: 'Arcade', icon: '🎮' },
+                            { id: 'competition', label: 'Competitions', icon: '🏆' },
+                            { id: 'memorizer', label: 'Memorizer', icon: '🧠' },
+                            { id: 'planner', label: 'Day Planner', icon: '📊' }
+                        ].map(item => (
+                            <button
+                                key={item.id}
+                                onClick={() => setCurrentPage(item.id)}
+                                className={`w-full text-left px-4 py-2 rounded-lg glass-btn ${currentPage === item.id ? 'bg-blue-500/30 border border-blue-500' : 'hover:bg-white/5'}`}
+                            >
+                                {item.icon} {item.label}
+                            </button>
+                        ))}
+                    </div>
+                    <button className="w-full px-4 py-2 bg-blue-600 rounded-lg glass-btn text-white font-semibold">Settings</button>
+                </nav>
+            );
+
+            const renderHome = () => (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="glass-card p-6 rounded-xl">
+                        <div className="text-3xl font-bold text-blue-400">{stats.totalSets}</div>
+                        <div className="text-gray-400 mt-2">Study Sets Created</div>
+                    </div>
+                    <div className="glass-card p-6 rounded-xl">
+                        <div className="text-3xl font-bold text-green-400">{stats.cardsStudied}</div>
+                        <div className="text-gray-400 mt-2">Cards Studied</div>
+                    </div>
+                    <div className="glass-card p-6 rounded-xl">
+                        <div className="text-3xl font-bold text-purple-400">{stats.accuracy}%</div>
+                        <div className="text-gray-400 mt-2">Accuracy Rate</div>
+                    </div>
+                </div>
+            );
+
+            const renderMySets = () => (
+                <div className="space-y-4">
+                    <button className="px-6 py-3 bg-blue-600 rounded-lg glass-btn text-white font-semibold">+ Create New Set</button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {['Biology Basics', 'Spanish Vocab', 'US History', 'Chemistry Equations'].map((set, i) => (
+                            <div key={i} className="glass-card p-6 rounded-xl cursor-pointer glass-btn">
+                                <h3 className="font-bold text-lg">{set}</h3>
+                                <p className="text-gray-400 text-sm mt-2">24 Cards</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            const renderFlashcards = () => (
+                <div className="space-y-6">
+                    <div className="glass-card p-8 rounded-xl text-center">
+                        <div className="text-6xl mb-4">🎯</div>
+                        <p className="text-lg mb-6">Front of Card</p>
+                        <div className="flex gap-4 justify-center">
+                            <button className="px-6 py-2 bg-green-600 rounded-lg glass-btn">Know It</button>
+                            <button className="px-6 py-2 bg-yellow-600 rounded-lg glass-btn">Reviewing</button>
+                            <button className="px-6 py-2 bg-red-600 rounded-lg glass-btn">Need Help</button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderArcade = () => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {[
+                        { name: 'Quiz Rush', desc: 'Kahoot-style timed questions', icon: '⚡' },
+                        { name: 'Memory Match', desc: 'Matching pairs card game', icon: '🎴' },
+                        { name: 'Word Blitz', desc: 'Fast vocabulary matching', icon: '💨' },
+                        { name: 'Trivia Climb', desc: 'Ladder-style progression', icon: '🪜' },
+                        { name: 'Study Shooter', desc: 'Space Invaders style', icon: '🎯' },
+                        { name: 'Multiplayer', desc: 'Challenge friends', icon: '👥' }
+                    ].map((game, i) => (
+                        <div key={i} className="glass-card p-6 rounded-xl cursor-pointer glass-btn">
+                            <div className="text-4xl mb-2">{game.icon}</div>
+                            <h3 className="font-bold">{game.name}</h3>
+                            <p className="text-gray-400 text-sm">{game.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            );
+
+            const renderChat = () => (
+                <div className="glass-card p-6 rounded-xl flex flex-col h-96">
+                    <div className="flex-1 mb-4 space-y-2 text-gray-400">
+                        <p>💬 Ask me anything about your studies!</p>
+                        <p>• Explain complex concepts</p>
+                        <p>• Review topics in detail</p>
+                        <p>• Generate practice questions</p>
+                    </div>
+                    <input type="text" placeholder="Ask a question..." className="w-full px-4 py-2 bg-white/5 rounded-lg border border-blue-500/20 focus:outline-none focus:border-blue-500"/>
+                </div>
+            );
+
+            const renderContent = () => {
+                switch(currentPage) {
+                    case 'home': return renderHome();
+                    case 'sets': return renderMySets();
+                    case 'flashcards': return renderFlashcards();
+                    case 'arcade': return renderArcade();
+                    case 'chat': return renderChat();
+                    case 'quizzes': return <div className="glass-card p-6 rounded-xl"><h2 className="text-2xl font-bold mb-4">AI-Generated Quizzes</h2><p className="text-gray-400">Select a study set to generate customized quizzes with instant grading and performance analytics.</p></div>;
+                    case 'calendar': return <div className="glass-card p-6 rounded-xl"><h2 className="text-2xl font-bold mb-4">📅 Calendar</h2><p className="text-gray-400">Interactive calendar for scheduling study sessions and tracking deadlines.</p></div>;
+                    case 'notes': return <div className="glass-card p-6 rounded-xl"><h2 className="text-2xl font-bold mb-4">📖 Notes & Materials</h2><p className="text-gray-400">Rich text editor with PDF/image uploads and file support.</p></div>;
+                    case 'essay': return <div className="glass-card p-6 rounded-xl"><h2 className="text-2xl font-bold mb-4">✍️ Essay Grading</h2><p className="text-gray-400">AI-powered feedback with grammar checks and structure analysis.</p></div>;
+                    case 'competition': return <div className="glass-card p-6 rounded-xl"><h2 className="text-2xl font-bold mb-4">🏆 Competition Prep</h2><p className="text-gray-400">Specialized modules for AMC 10, Science Olympiad, SAT, and AP exams.</p></div>;
+                    case 'memorizer': return <div className="glass-card p-6 rounded-xl"><h2 className="text-2xl font-bold mb-4">🧠 Memorizer</h2><p className="text-gray-400">Smart memorization using active recall and spaced repetition.</p></div>;
+                    case 'planner': return <div className="glass-card p-6 rounded-xl"><h2 className="text-2xl font-bold mb-4">📊 Day Planner</h2><p className="text-gray-400">Time blocking with productivity tracking and daily schedules.</p></div>;
+                    default: return renderHome();
+                }
+            };
+
+            return (
+                <div className="flex h-screen">
+                    {renderNavigation()}
+                    <main className="ml-64 flex-1 overflow-auto">
+                        <div className="p-8 max-w-7xl">
+                            <h1 className="text-4xl font-bold mb-8">Welcome to Study Buddy 🎓</h1>
+                            {renderContent()}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<APP />);
+    </script>
+</body>
+</html>
